@@ -22,15 +22,29 @@ void clearScreen() {
 
 // Fungsi untuk menampilkan teks di tengah
 void printCentered(const char *text) {
-    int terminalWidth = 80;  // Misalkan lebar terminal 80 karakter
+    int terminalWidth = 80;  // Asumsi lebar terminal
     int textLength = strlen(text);
-    int padding = (terminalWidth - textLength) / 2;  // Menghitung banyak spasi sebelum teks
+    int padding = (terminalWidth - textLength) / 2;
 
-    int i;
+	int i;
     for (i = 0; i < padding; i++) {
         printf(" ");
     }
     printf("%s\n", text);
+}
+
+// Fungsi untuk memproses string (trim dan lowercase)
+void processString(char str[]) {
+    int start = 0, end = strlen(str) - 1;
+
+    while (str[start] == ' ') start++;
+    while (end >= start && str[end] == ' ') end--;
+
+    int i;
+    for (i = 0; start <= end; i++, start++) {
+        str[i] = tolower(str[start]);
+    }
+    str[i] = '\0';
 }
 
 // Fungsi untuk menampilkan daftar makanan
@@ -40,14 +54,8 @@ void tampilkanMakanan(Makanan makanan[], int jumlah) {
         return;
     }
 
-    int maxNamaLength = 0;
-    int i;
-    for (i = 0; i < jumlah; i++) {
-        maxNamaLength = fmax(maxNamaLength, strlen(makanan[i].nama));
-    }
-
-    int lebarNama = (maxNamaLength > 30) ? maxNamaLength : 30;
-
+    int lebarNama = 30;
+    int i; // Deklarasi di luar loop
     printf("\nDaftar Makanan:\n");
     printf("---------------------------------------------------\n");
     printf("| %-4s | %-*s | %-6s |\n", "No", lebarNama, "Nama Makanan", "Rating");
@@ -60,36 +68,9 @@ void tampilkanMakanan(Makanan makanan[], int jumlah) {
     printf("---------------------------------------------------\n");
 }
 
-// Fungsi untuk mengubah string menjadi huruf kecil
-void toLowerCase(char str[]) {
-    int i;
-    for (i = 0; str[i]; i++) {
-        str[i] = tolower(str[i]);
-    }
-}
-
-// Fungsi untuk menghapus spasi di awal dan akhir string
-void trim(char str[]) {
-    int start = 0, end = strlen(str) - 1;
-
-    while (str[start] == ' ') {
-        start++;
-    }
-
-    while (end >= start && str[end] == ' ') {
-        end--;
-    }
-
-    int i;
-    for (i = 0; start <= end; i++, start++) {
-        str[i] = str[start];
-    }
-    str[end + 1] = '\0';
-}
-
-// Bubble Sort untuk mengurutkan makanan berdasarkan rating
+// Fungsi untuk mengurutkan makanan
 void bubbleSort(Makanan makanan[], int jumlah) {
-    int i, j;
+    int i, j; // Deklarasi di luar loop
     for (i = 0; i < jumlah - 1; i++) {
         for (j = 0; j < jumlah - i - 1; j++) {
             if (makanan[j].rating < makanan[j + 1].rating) {
@@ -101,35 +82,31 @@ void bubbleSort(Makanan makanan[], int jumlah) {
     }
 }
 
-// Fungsi untuk melakukan Jump Search berdasarkan nama makanan
+// Fungsi untuk mencari makanan
 int jumpSearch(Makanan makanan[], int jumlah, char target[]) {
-    int step = sqrt(jumlah);
-    int prev = 0;
-    int i;
+    processString(target);
+    int step = (int)sqrt(jumlah); // Pastikan step adalah integer
+    int prev = 0, i;
+    char tempNama[50];
 
-    trim(target);
-    toLowerCase(target);
-
-    while (prev < jumlah && strcmp(makanan[step - 1].nama, target) < 0) {
+    // Loop untuk melompati blok
+    while (prev < jumlah && strcmp(makanan[(step < jumlah ? step : jumlah) - 1].nama, target) < 0) {
         prev = step;
-        step += sqrt(jumlah);
-        if (prev >= jumlah) {
-            return -1;
-        }
+        step += (int)sqrt(jumlah); // Update langkah berikutnya
+        if (prev >= jumlah) return -1;
     }
 
-    for (i = prev; i < fmin(step, jumlah); i++) {
-        char tempNama[50];
+    // Linear search di blok yang relevan
+    for (i = prev; i < (step < jumlah ? step : jumlah); i++) {
         strcpy(tempNama, makanan[i].nama);
-        trim(tempNama);
-        toLowerCase(tempNama);
+        processString(tempNama);
 
-        if (strcmp(tempNama, target) == 0) {
-            return i;
-        }
+        if (strcmp(tempNama, target) == 0) return i;
     }
-    return -1;
+
+    return -1; // Tidak ditemukan
 }
+
 
 // Fungsi untuk menambah makanan
 void tambahMakanan(Makanan makanan[], int *jumlah) {
@@ -138,19 +115,22 @@ void tambahMakanan(Makanan makanan[], int *jumlah) {
         return;
     }
 
-    printf("\nMasukkan nama makanan (gunakan spasi jika perlu): ");
+    printf("\nMasukkan nama makanan: ");
     fgets(makanan[*jumlah].nama, sizeof(makanan[*jumlah].nama), stdin);
     makanan[*jumlah].nama[strcspn(makanan[*jumlah].nama, "\n")] = '\0';
-    trim(makanan[*jumlah].nama);
-    toLowerCase(makanan[*jumlah].nama);
+    processString(makanan[*jumlah].nama);
+
+    if (strlen(makanan[*jumlah].nama) == 0) {
+        printf("Nama makanan tidak boleh kosong.\n");
+        return;
+    }
 
     do {
         printf("Masukkan rating makanan (1-5): ");
         scanf("%d", &makanan[*jumlah].rating);
         getchar();
-
         if (makanan[*jumlah].rating < 1 || makanan[*jumlah].rating > 5) {
-            printf("Rating tidak valid. Harap masukkan rating antara 1 dan 5.\n");
+            printf("Rating tidak valid. Masukkan angka 1-5.\n");
         }
     } while (makanan[*jumlah].rating < 1 || makanan[*jumlah].rating > 5);
 
@@ -161,17 +141,16 @@ void tambahMakanan(Makanan makanan[], int *jumlah) {
 // Fungsi untuk menghapus makanan
 void hapusMakanan(Makanan makanan[], int *jumlah, int index) {
     if (index < 0 || index >= *jumlah) {
-        printf("Makanan tidak ditemukan.\n");
+        printf("Nomor makanan tidak valid.\n");
         return;
     }
 
-	int i;
+    int i; // Deklarasi di luar loop
     for (i = index; i < *jumlah - 1; i++) {
         makanan[i] = makanan[i + 1];
     }
 
     (*jumlah)--;
-
     printf("\nMakanan berhasil dihapus!\n");
 }
 
@@ -183,7 +162,7 @@ int main() {
     int index;
 
     clearScreen();
-    printCentered("=== Selamat Datang di Program Pengurutan Makanan Favorit ===");
+    printCentered("=== Selamat Datang di Program Pengurutan Makanan ===");
     printf("\nTekan Enter untuk melanjutkan...");
     getchar();
 
@@ -201,80 +180,46 @@ int main() {
 
         switch (pilihan) {
             case '1':
-                clearScreen();
-                printf("=== Tambah Makanan ===\n");
                 tambahMakanan(makanan, &jumlah);
-                printf("\nTekan Enter untuk kembali ke menu...");
-                getchar();
                 break;
-
             case '2': {
-                clearScreen();
                 if (jumlah == 0) {
                     printf("Belum ada makanan yang dimasukkan.\n");
-                    printf("\nTekan Enter untuk kembali ke menu...");
-                    getchar();
                     break;
                 }
                 char target[50];
-                printf("=== Cari Makanan ===\n");
-                printf("\nMasukkan nama makanan yang ingin dicari: ");
+                printf("Masukkan nama makanan: ");
                 fgets(target, sizeof(target), stdin);
                 target[strcspn(target, "\n")] = '\0';
-
                 int hasil = jumpSearch(makanan, jumlah, target);
                 if (hasil != -1) {
-                    printf("Makanan '%s' ditemukan pada urutan ke-%d dengan rating %d.\n",
+                    printf("Makanan '%s' ditemukan di urutan ke-%d dengan rating %d.\n",
                            makanan[hasil].nama, hasil + 1, makanan[hasil].rating);
                 } else {
-                    printf("Makanan '%s' tidak ditemukan dalam daftar.\n", target);
+                    printf("Makanan '%s' tidak ditemukan.\n");
                 }
-                printf("\nTekan Enter untuk kembali ke menu...");
-                getchar();
                 break;
             }
-
             case '3':
-                clearScreen();
-                printf("=== Daftar Makanan ===\n");
                 bubbleSort(makanan, jumlah);
                 tampilkanMakanan(makanan, jumlah);
-                printf("\nTekan Enter untuk kembali ke menu...");
-                getchar();
                 break;
-
             case '4':
-                clearScreen();
-                if (jumlah == 0) {
-                    printf("Belum ada makanan yang dimasukkan.\n");
-                    printf("\nTekan Enter untuk kembali ke menu...");
-                    getchar();
-                    break;
-                }
-
-                printf("=== Hapus Makanan ===\n");
                 tampilkanMakanan(makanan, jumlah);
                 printf("Masukkan nomor makanan yang ingin dihapus: ");
                 scanf("%d", &index);
                 getchar();
-
-                if (index > 0 && index <= jumlah) {
-                    hapusMakanan(makanan, &jumlah, index - 1);
-                } else {
-                    printf("\nNomor makanan tidak valid.\n");
-                }
-                printf("\nTekan Enter untuk kembali ke menu...");
-                getchar();
+                hapusMakanan(makanan, &jumlah, index - 1);
                 break;
-
             case '5':
-                printf("\nTerima kasih telah menggunakan program ini!\n");
+                printf("Terima kasih telah menggunakan program ini.\n");
                 break;
-
             default:
-                printf("\nPilihan tidak valid. Silakan pilih lagi.\n");
+                printf("Pilihan tidak valid. Coba lagi.\n");
                 break;
         }
+        printf("\nTekan Enter untuk melanjutkan...");
+        getchar();
     } while (pilihan != '5');
 
     return 0;
