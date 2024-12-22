@@ -194,7 +194,7 @@ int main() {
     do {
         clearScreen();
         printf("=== Menu ===\n");
-        printf("1. Tambah Makanan\n");
+        printf("1. Tambahkan Makanan\n");
         printf("2. Cari Makanan\n");
         printf("3. Tampilkan Daftar Makanan\n");
         printf("4. Hapus Makanan\n");
