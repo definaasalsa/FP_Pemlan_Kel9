@@ -152,18 +152,16 @@ void tambahMakanan(Makanan makanan[], int *jumlah) {
     trim(makanan[*jumlah].nama);
     toLowerCase(makanan[*jumlah].nama);
 
-    int rating;
-    printf("Masukkan rating makanan (1-5): ");
-    scanf("%d", &rating);
-    getchar(); // Membersihkan buffer
+    do {
+        printf("Masukkan rating makanan (1-5): ");
+        scanf("%d", &makanan[*jumlah].rating);
+        getchar(); // Membersihkan buffer
 
-    // Validasi rating
-    if (rating < 1 || rating > 5) {
-        printf("\nRating tidak valid! Harus antara 1 dan 5.\n");
-        return;
-    }
+        if (makanan[*jumlah].rating < 1 || makanan[*jumlah].rating > 5) {
+            printf("Rating tidak valid. Harap masukkan rating antara 1 dan 5.\n");
+        }
+    } while (makanan[*jumlah].rating < 1 || makanan[*jumlah].rating > 5);
 
-    makanan[*jumlah].rating = rating;
     (*jumlah)++;
     printf("\nMakanan berhasil ditambahkan!\n");
 }
